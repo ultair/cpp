@@ -6,7 +6,8 @@ all: structured_bindings\
 	 scope_limit \
 	 vector_item_removal \
 	 vector_item_removal_2 \
-	 vector_item_removal_3
+	 vector_item_removal_3 \
+	 lambdas
 
 .PHONY: all
 
@@ -25,6 +26,9 @@ vector_item_removal_2: vector_item_removal_2.cpp
 vector_item_removal_3: vector_item_removal_3.cpp
 	$(CC) $(CFLAGS) -o $@ $^
 
+lambdas: lambdas.cpp
+	$(CC) $(CFLAGS) -o $@ $^
+
 .PHONY: clean
 
 clean:
@@ -32,4 +36,5 @@ clean:
 		  scope_limit\
 		  vector_item_removal\
 		  vector_item_removal_2\
-		  vector_item_removal_3
+		  vector_item_removal_3\
+		  lambdas
