@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 
     cout << "Value of a: " << a << endl;
 
-    auto plus_ten( [](auto n) {return plus(n,10);} );
+    auto plus_ten( [=](auto n) {return plus(n,10);} );
 
     cout << plus_ten(20) << endl;
 

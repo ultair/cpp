@@ -7,7 +7,8 @@ all: structured_bindings\
 	 vector_item_removal \
 	 vector_item_removal_2 \
 	 vector_item_removal_3 \
-	 lambdas
+	 lambdas \
+	 threads_1
 
 .PHONY: all
 
@@ -29,6 +30,9 @@ vector_item_removal_3: vector_item_removal_3.cpp
 lambdas: lambdas.cpp
 	$(CC) $(CFLAGS) -o $@ $^
 
+threads_1: threads_1.cpp
+	$(CC) $(CFLAGS) -o $@ $^
+
 .PHONY: clean
 
 clean:
@@ -37,4 +41,5 @@ clean:
 		  vector_item_removal\
 		  vector_item_removal_2\
 		  vector_item_removal_3\
-		  lambdas
+		  lambdas\
+		  threads_1
