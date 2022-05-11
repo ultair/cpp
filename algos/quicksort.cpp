@@ -1,3 +1,26 @@
+/**
+ * Quicksort sorting algorithm
+ *
+ * Consists of two functions - quicksort and partition.
+ *
+ * The quicksort entry function divides the array into two partitions
+ * along a 'pivot', returned by partition. It recursively calls itself
+ * for each side of the partition.
+ *
+ * The partition function:
+ * - picks a pivot (can be random)
+ * - sets an index for low-1
+ * - iterates from low to high
+ * - if element is less than pivot,
+ *   increment the index,
+ *   swap the element with index
+ *
+ * - After loop completion
+ * - Increment index
+ * - Swap index with array[high]
+ * - Return index
+ */
+
 #include <iostream>
 #include <vector>
 #include <cstdio>
