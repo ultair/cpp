@@ -1,0 +1,37 @@
+Notes on C++ Standard Library containers
+
+----------------------------------------
+
+Sequence containers
+
+----------------------------------------
+
+Deque
+
+----------------------------------------
+
+Designed for fast insertion at its beginning or end.
+
+The deque holds a data structure of four members.
+The memory map, the memory map size and two iterators, pointing to the front and back.
+
+Most business logic is contained within the iterator code.
+
+Stores its elements within separate blocks of individual arrays.
+
+The blocks themselves are contiguous pieces of memory, arrays.
+
+The layout in memory of the blocks are non-contiguous. They are referenced using a memory map.
+
+The memory map begins with a size of 8. It is assigned from the middle-outwards, growing if required.
+
+For insertion at either end, the blocks themselves are never resized or copied. This makes reallocation less expensive than a vector,
+which must copy all its elements to the newly-allocated array. Insertions inside the deque can be expensive as elements must be moved.
+
+The deque will assign its 'back' queue first. The 'front' queue is allocated on first 'push_front'.
+
+The back queue grows like a traditional array, beginning to end. The front queue grows backwards.
+
+It is random-access addressable. Pointer arithmetic is used to determine the element address.
+
+
