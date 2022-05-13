@@ -1,6 +1,6 @@
 CC=g++
 
-CFLAGS=-std=c++17 -Wpedantic
+CFLAGS=-std=c++17 -Wpedantic -g
 
 all: hashmap deque
 
