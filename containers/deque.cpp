@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 template <typename T>
 class MyDeque
@@ -26,6 +27,8 @@ public:
 
     bool is_empty();
 
+    size_t size();
+
     inline constexpr size_t GetNodeSize(size_t elSize)
     {
     	return ( elSize < blockSize_
@@ -33,6 +36,8 @@ public:
     }
 
 private:
+
+    T* AllocateNode();
 
     void ExtendFront();
 
@@ -48,7 +53,7 @@ private:
 
     T** const blockMap_{nullptr};
 
-    int blockBegin_{-1};
+    int blockBegin_{3};
 
     int blockEnd_{3};
 
@@ -62,7 +67,7 @@ MyDeque<T>::MyDeque()
     : blockMap_(reinterpret_cast<T**>(calloc(mapSize_, sizeof(T**))))
 {
     // The first to be allocated is the 'back' queue
-    blockMap_[blockEnd_] = reinterpret_cast<T*>(calloc(GetNodeSize(sizeof(T)), sizeof(T)));
+    blockMap_[blockEnd_] = AllocateNode();
 }
 
 template <typename T>
@@ -80,6 +85,12 @@ MyDeque<T>::~MyDeque()
 }
 
 template <typename T>
+T* MyDeque<T>::AllocateNode()
+{
+    return reinterpret_cast<T*>(calloc(GetNodeSize(sizeof(T)), sizeof(T)));
+}
+
+template <typename T>
 void MyDeque<T>::push_front(const T& item)
 {
 
@@ -91,6 +102,17 @@ void MyDeque<T>::push_back(const T& item)
     ExtendBack();
 
     *back_ = item;
+}
+
+template <typename T>
+void MyDeque<T>::pop_back()
+{
+    if(back_)
+    {
+        std::destroy_at(back_);
+
+        RegressBack();
+    }
 }
 
 template <typename T>
@@ -108,12 +130,10 @@ void MyDeque<T>::ExtendBack()
             }
             else
             {
-                std::cout << "Allocate a new node" << std::endl;
-
                 ++blockEnd_;
 
                 // Allocate a new tail node
-                blockMap_[blockEnd_] = reinterpret_cast<T*>(calloc(GetNodeSize(sizeof(T)), sizeof(T)));
+                blockMap_[blockEnd_] = AllocateNode();
 
                 back_ = blockMap_[blockEnd_];
             }
@@ -129,14 +149,80 @@ void MyDeque<T>::ExtendBack()
     }
 }
 
+template <typename T>
+void MyDeque<T>::RegressBack()
+{
+    if(back_)
+    {
+        // Are we at the start of the tail node?
+        if( blockMap_[blockEnd_] == back_ )
+        {
+            if(blockEnd_ > blockBegin_)
+            {
+                // Deallocate the node
+                free(blockMap_[blockEnd_]);
+
+                --blockEnd_;
+
+                back_ = blockMap_[blockEnd_] + (GetNodeSize(sizeof(T)) - 1);
+            }
+            else
+            {
+                back_ = nullptr;
+            }
+        }
+        else
+        {
+            --back_;
+        }
+    }
+}
+
+template <typename T>
+size_t MyDeque<T>::size()
+{
+    if(front_)
+    {
+        return 0;
+    }
+    else if(back_)
+    {
+        size_t nodeElementCount = (blockEnd_ - blockBegin_) * GetNodeSize(sizeof(T));
+
+        return 1 + (back_ - blockMap_[blockEnd_]) + nodeElementCount;
+    }
+
+    return 0;
+}
+
+template <typename T>
+T& MyDeque<T>::at(size_t pos)
+{
+    if(front_)
+    {
+        // PLACEHOLDER
+        return blockMap_[0][0];
+    }
+    else if(back_)
+    {
+        int nodeIndex = pos / GetNodeSize(sizeof(T));
+
+        int nodeOffset = pos - (GetNodeSize(sizeof(T)) * nodeIndex);
+
+        return blockMap_[blockBegin_ + nodeIndex][nodeOffset];
+    }
+
+    // PLACEHOLDER
+    return blockMap_[0][0];
+}
+
 int main(int argc, char** argv)
 {
     MyDeque<int> deque;
 
-    for(int i=0; i<10000; i++)
-    {
-        deque.push_back(i);
-    }
+    std::cout << "Size: " << deque.size() << std::endl;
+
+    deque.push_back(100);
 
     return 0;
 }
