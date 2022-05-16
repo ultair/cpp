@@ -1,13 +1,17 @@
 #include <iostream>
 #include <memory>
+#include <stdexcept>
+
+namespace mmw
+{
 
 template <typename T>
-class MyDeque
+class Deque
 {
 public:
-    MyDeque();
+    Deque();
 
-    ~MyDeque();
+    ~Deque();
 
     void push_front(const T& item);
 
@@ -25,13 +29,16 @@ public:
 
     void clear();
 
-    bool is_empty();
+    inline bool is_empty()
+    {
+        return !front_ && !back_;
+    }
 
     size_t size();
 
     inline constexpr size_t GetNodeSize()
     {
-    	return ( sizeof(T) < blockSize_
+    	return (sizeof(T) < blockSize_
                  ? size_t(blockSize_ / sizeof(T)) : size_t(1));
     }
 
@@ -61,9 +68,10 @@ private:
 
     T* back_{nullptr};
 };
+}
 
 template <typename T>
-MyDeque<T>::MyDeque()
+mmw::Deque<T>::Deque()
     : blockMap_(reinterpret_cast<T**>(calloc(mapSize_, sizeof(T**))))
 {
     // The first to be allocated is the 'back' queue
@@ -71,7 +79,7 @@ MyDeque<T>::MyDeque()
 }
 
 template <typename T>
-MyDeque<T>::~MyDeque()
+mmw::Deque<T>::~Deque()
 {
     for(size_t i = 0; i < mapSize_; i++)
     {
@@ -85,7 +93,7 @@ MyDeque<T>::~MyDeque()
 }
 
 template <typename T>
-T* MyDeque<T>::AllocateNode()
+T* mmw::Deque<T>::AllocateNode()
 {
     std::cout << "Allocating a node with size of " << GetNodeSize() << std::endl;
 
@@ -93,7 +101,7 @@ T* MyDeque<T>::AllocateNode()
 }
 
 template <typename T>
-void MyDeque<T>::push_front(const T& item)
+void mmw::Deque<T>::push_front(const T& item)
 {
     ExtendFront();
 
@@ -101,7 +109,7 @@ void MyDeque<T>::push_front(const T& item)
 }
 
 template <typename T>
-void MyDeque<T>::ExtendFront()
+void mmw::Deque<T>::ExtendFront()
 {
     if(front_)
     {
@@ -140,17 +148,19 @@ void MyDeque<T>::ExtendFront()
 }
 
 template <typename T>
-void MyDeque<T>::RegressFront()
+void mmw::Deque<T>::RegressFront()
 {
     if(front_)
     {
         // Are we at the end of the head node?
         if( (blockMap_[blockBegin_] + (GetNodeSize() - 1)) == front_ )
         {
-            if( blockBegin_ < blockEnd_ )
+            if( blockBegin_ < (mapSize_ / 2) )
             {
                 // Deallocate the node
                 free(blockMap_[blockBegin_]);
+
+                blockMap_[blockBegin_] = nullptr;
 
                 ++blockBegin_;
 
@@ -169,7 +179,7 @@ void MyDeque<T>::RegressFront()
 }
 
 template <typename T>
-void MyDeque<T>::push_back(const T& item)
+void mmw::Deque<T>::push_back(const T& item)
 {
     ExtendBack();
 
@@ -177,7 +187,7 @@ void MyDeque<T>::push_back(const T& item)
 }
 
 template <typename T>
-void MyDeque<T>::pop_front()
+void mmw::Deque<T>::pop_front()
 {
     if(front_)
     {
@@ -188,7 +198,7 @@ void MyDeque<T>::pop_front()
 }
 
 template <typename T>
-void MyDeque<T>::pop_back()
+void mmw::Deque<T>::pop_back()
 {
     if(back_)
     {
@@ -199,7 +209,7 @@ void MyDeque<T>::pop_back()
 }
 
 template <typename T>
-void MyDeque<T>::ExtendBack()
+void mmw::Deque<T>::ExtendBack()
 {
     if(back_)
     {
@@ -233,17 +243,19 @@ void MyDeque<T>::ExtendBack()
 }
 
 template <typename T>
-void MyDeque<T>::RegressBack()
+void mmw::Deque<T>::RegressBack()
 {
     if(back_)
     {
         // Are we at the start of the tail node?
         if( blockMap_[blockEnd_] == back_ )
         {
-            if(blockEnd_ > blockBegin_)
+            if(blockEnd_ > (mapSize_ / 2))
             {
                 // Deallocate the node
                 free(blockMap_[blockEnd_]);
+
+                blockMap_[blockEnd_] = nullptr;
 
                 --blockEnd_;
 
@@ -262,28 +274,75 @@ void MyDeque<T>::RegressBack()
 }
 
 template <typename T>
-size_t MyDeque<T>::size()
+T& mmw::Deque<T>::front()
 {
     if(front_)
     {
-        return 0;
+        return *front_;
     }
     else if(back_)
     {
-        size_t nodeElementCount = (blockEnd_ - blockBegin_) * GetNodeSize();
-
-        return 1 + (back_ - blockMap_[blockEnd_]) + nodeElementCount;
+        return blockMap_[blockBegin_][0];
     }
-
-    return 0;
+    else
+    {
+        throw std::out_of_range();
+    }
 }
 
 template <typename T>
-T& MyDeque<T>::at(size_t pos)
+T& mmw::Deque<T>::back()
 {
-    //std::cout << "Search for " << pos << std::endl;
+    if(back_)
+    {
+        return *back_;
+    }
+    else if(front_)
+    {
+        return blockMap_[blockEnd_ - 1][GetNodeSize() - 1];
+    }
+    else
+    {
+        throw std::out_of_range();
+    }
+}
 
-    int nodeM{0};
+template <typename T>
+size_t mmw::Deque<T>::size()
+{
+    size_t numElements{0};
+
+    if(front_ || back_)
+    {
+        int remainingNodes = blockEnd_ - blockBegin_;
+
+        if(front_)
+        {
+            numElements += (blockMap_[blockBegin_] + GetNodeSize()) - front_;
+
+            --remainingNodes;
+        }
+
+        if(back_)
+        {
+            numElements += (back_ - blockMap_[blockEnd_]) + 1;
+        }
+
+        numElements += (GetNodeSize() * remainingNodes);
+    }
+
+    return numElements;
+}
+
+template <typename T>
+T& mmw::Deque<T>::at(size_t pos)
+{
+    if(pos > (size()-1))
+    {
+        throw std::out_of_range();
+    }
+
+    int skipHeadNode{0};
 
     if(front_)
     {
@@ -299,44 +358,34 @@ T& MyDeque<T>::at(size_t pos)
             // The element will be found in the second node onwards
             pos -= (headLastPos + 1);
 
-            nodeM = 1;
+            skipHeadNode = 1;
         }
     }
 
-    int nodeIndex = (pos / GetNodeSize()) + nodeM;
+    int nodeIndex = (pos / GetNodeSize()) + skipHeadNode;
 
-    int nodeOffset = pos;
-
-    if(nodeOffset >= GetNodeSize())
-    {
-        nodeOffset = pos % GetNodeSize();
-    }
-
-/*    std::cout << "Pos: " << pos
-              << " nodeM: " << nodeM
-              << " nodeIndex: " << nodeIndex
-              << " nodeOffset: " << nodeOffset
-              << std::endl;*/
+    int nodeOffset = pos % GetNodeSize();
 
     return blockMap_[blockBegin_ + nodeIndex][nodeOffset];
 }
 
 int main(int argc, char** argv)
 {
-    MyDeque<int> deque;
+    mmw::Deque<int> deque;
 
-    for(int i=1; i<=260; i++)
+/*    for(int i=1; i<=400; i++)
     {
         std::cout << "Push front: " << i << std::endl;
         deque.push_front(i);
     }
 
-    for(int i=0; i<260; i++)
+    for(int i=1; i<=200; i++)
     {
-        int n = deque.at(i);
+        std::cout << "Push back: " << i << std::endl;
+        deque.push_back(i);
+    }*/
 
-        std::cout << "at " << i << ": " << n << std::endl;
-    }
+    std::cout << deque.size() << std::endl;
 
     return 0;
 }
