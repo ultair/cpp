@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <cstring>
 
 namespace mmw
 {
@@ -56,7 +57,7 @@ private:
 
     static constexpr size_t blockSize_{512};
 
-    size_t mapSize_{8};
+    const size_t mapSize_{8};
 
     T** const blockMap_{nullptr};
 
@@ -81,13 +82,7 @@ mmw::Deque<T>::Deque()
 template <typename T>
 mmw::Deque<T>::~Deque()
 {
-    for(size_t i = 0; i < mapSize_; i++)
-    {
-        if(blockMap_[i])
-        {
-            free(blockMap_[i]);
-        }
-    }
+    this->clear();
 
     free(blockMap_);    
 }
@@ -155,14 +150,12 @@ void mmw::Deque<T>::RegressFront()
         // Are we at the end of the head node?
         if( (blockMap_[blockBegin_] + (GetNodeSize() - 1)) == front_ )
         {
-            if( blockBegin_ < (mapSize_ / 2) )
+            if( ++blockBegin_ < (mapSize_ / 2) )
             {
                 // Deallocate the node
                 free(blockMap_[blockBegin_]);
 
                 blockMap_[blockBegin_] = nullptr;
-
-                ++blockBegin_;
 
                 front_ = blockMap_[blockBegin_];
             }
@@ -307,6 +300,54 @@ T& mmw::Deque<T>::back()
     }
 }
 
+
+template <typename T>
+void mmw::Deque<T>::clear()
+{
+    if(!this->is_empty())
+    {
+        size_t sz = this->size();
+
+        for(size_t i = 0; i < (sz - 1); i++)
+        {
+            try {
+                std::destroy_at(&this->at(i));
+            }  catch(...) {
+
+            }
+        }
+
+        for(size_t i = 0; i < (mapSize_ / 2); i++)
+        {
+            if(blockMap_[i])
+            {
+                free(blockMap_[i]);
+                blockMap_[i] = nullptr;
+            }
+        }
+
+        // Zero out the middle block but don't de-allocate it
+        memset(blockMap_[mapSize_ / 2], '\0', GetNodeSize() * sizeof(T));
+
+        for(size_t i = (mapSize_ / 2) + 1; i < mapSize_; i++)
+        {
+            if(blockMap_[i])
+            {
+                free(blockMap_[i]);
+                blockMap_[i] = nullptr;
+            }
+        }
+
+        blockBegin_ = mapSize_ / 2;
+
+        blockEnd_ = mapSize_ / 2;
+
+        front_ = nullptr;
+
+        back_ = nullptr;
+    }
+}
+
 template <typename T>
 size_t mmw::Deque<T>::size()
 {
@@ -339,7 +380,7 @@ T& mmw::Deque<T>::at(size_t pos)
 {
     if(pos > (size()-1))
     {
-        throw std::out_of_range();
+        throw std::out_of_range("Out of range");
     }
 
     int skipHeadNode{0};
@@ -373,7 +414,7 @@ int main(int argc, char** argv)
 {
     mmw::Deque<int> deque;
 
-/*    for(int i=1; i<=400; i++)
+    for(int i=1; i<=400; i++)
     {
         std::cout << "Push front: " << i << std::endl;
         deque.push_front(i);
@@ -383,7 +424,11 @@ int main(int argc, char** argv)
     {
         std::cout << "Push back: " << i << std::endl;
         deque.push_back(i);
-    }*/
+    }
+
+    std::cout << deque.size() << std::endl;
+
+    deque.clear();
 
     std::cout << deque.size() << std::endl;
 
