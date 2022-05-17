@@ -1,0 +1,4 @@
+Required build packages (RHEL8)
+
+unittest-cpp
+unittest-cpp-devel

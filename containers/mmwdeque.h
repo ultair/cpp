@@ -60,7 +60,7 @@ private:
 
     static constexpr size_t blockSize_{512};
 
-    const size_t mapSize_{8};
+    const size_t mapSize_{128};
 
     T** const blockMap_{nullptr};
 
@@ -280,7 +280,7 @@ T& mmw::Deque<T>::front()
     }
     else
     {
-        throw std::out_of_range();
+        throw std::out_of_range("Out of range");
     }
 }
 
@@ -297,7 +297,7 @@ T& mmw::Deque<T>::back()
     }
     else
     {
-        throw std::out_of_range();
+        throw std::out_of_range("Out of range");
     }
 }
 
