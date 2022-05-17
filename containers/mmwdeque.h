@@ -35,7 +35,7 @@ public:
 
     inline bool is_empty()
     {
-        return !front_ && !back_;
+        return !head_ && !tail_;
     }
 
     size_t size();
@@ -64,13 +64,13 @@ private:
 
     T** const blockMap_{nullptr};
 
-    int blockBegin_ = mapSize_ / 2;
+    int headBlock_ = mapSize_ / 2;
 
-    int blockEnd_ = mapSize_ / 2;
+    int tailBlock_ = mapSize_ / 2;
 
-    T* front_{nullptr};
+    T* head_{nullptr};
 
-    T* back_{nullptr};
+    T* tail_{nullptr};
 };
 }
 
@@ -78,8 +78,7 @@ template <typename T>
 mmw::Deque<T>::Deque()
     : blockMap_(reinterpret_cast<T**>(calloc(mapSize_, sizeof(T**))))
 {
-    // The first to be allocated is the 'back' queue
-    blockMap_[blockEnd_] = AllocateNode();
+
 }
 
 template <typename T>
@@ -101,74 +100,13 @@ void mmw::Deque<T>::push_front(const T& item)
 {
     ExtendFront();
 
-    *front_ = item;
-}
+    *head_ = item;
 
-template <typename T>
-void mmw::Deque<T>::ExtendFront()
-{
-    if(front_)
+    if(!tail_)
     {
-        // Are we at the start of the head node?
-        if( blockMap_[blockBegin_] == front_ )
-        {
-            if( blockBegin_ == 0 )
-            {
-                std::cout << "Map size exceeded. Exit for now" << std::endl;
-                exit(1);
-            }
-            else
-            {
-                --blockBegin_;
+        tail_ = head_;
 
-                // Allocate a new head node
-                blockMap_[blockBegin_] = AllocateNode();
-
-                front_ = blockMap_[blockBegin_] + (GetNodeSize() - 1);
-            }
-        }
-        else
-        {
-            --front_;
-        }
-    }
-    else
-    {
-        --blockBegin_;
-
-        // Allocate a new head node
-        blockMap_[blockBegin_] = AllocateNode();
-
-        front_ = blockMap_[blockBegin_] + (GetNodeSize() - 1);
-    }
-}
-
-template <typename T>
-void mmw::Deque<T>::RegressFront()
-{
-    if(front_)
-    {
-        // Are we at the end of the head node?
-        if( (blockMap_[blockBegin_] + (GetNodeSize() - 1)) == front_ )
-        {
-            if( ++blockBegin_ < (mapSize_ / 2) )
-            {
-                // Deallocate the node
-                free(blockMap_[blockBegin_]);
-
-                blockMap_[blockBegin_] = nullptr;
-
-                front_ = blockMap_[blockBegin_];
-            }
-            else
-            {
-                front_ = nullptr;
-            }
-        }
-        else
-        {
-            ++front_;
-        }
+        tailBlock_ = headBlock_;
     }
 }
 
@@ -177,15 +115,95 @@ void mmw::Deque<T>::push_back(const T& item)
 {
     ExtendBack();
 
-    *back_ = item;
+    *tail_ = item;
+
+    if(!head_)
+    {
+        head_ = tail_;
+
+        headBlock_ = tailBlock_;
+    }
+}
+
+template <typename T>
+void mmw::Deque<T>::ExtendFront()
+{
+    if(head_)
+    {
+        // Are we at the start of the head node?
+        if( blockMap_[headBlock_] == head_ )
+        {
+            if( headBlock_ == 0 )
+            {
+                std::cout << "Map size exceeded. Exit for now" << std::endl;
+                exit(1);
+            }
+            else
+            {
+                --headBlock_;
+
+                // Allocate a new head node
+                blockMap_[headBlock_] = AllocateNode();
+
+                head_ = blockMap_[headBlock_] + (GetNodeSize() - 1);
+            }
+        }
+        else
+        {
+            --head_;
+        }
+    }
+    else
+    {
+        --headBlock_;
+
+        // Allocate a new head node
+        blockMap_[headBlock_] = AllocateNode();
+
+        head_ = blockMap_[headBlock_] + (GetNodeSize() - 1);
+    }
+}
+
+template <typename T>
+void mmw::Deque<T>::ExtendBack()
+{
+    if(tail_)
+    {
+        // Are we at the end of the tail node?
+        if( (blockMap_[tailBlock_] + (GetNodeSize() - 1)) == tail_ )
+        {
+            if( (tailBlock_+1) >= mapSize_ )
+            {
+                std::cout << "Map size exceeded. Exit for now" << std::endl;
+                exit(1);
+            }
+            else
+            {
+                ++tailBlock_;
+
+                // Allocate a new tail node
+                blockMap_[tailBlock_] = AllocateNode();
+
+                tail_ = blockMap_[tailBlock_];
+            }
+        }
+        else
+        {
+            ++tail_;
+        }
+    }
+    else
+    {
+        tail_ = blockMap_[tailBlock_];
+    }
 }
 
 template <typename T>
 void mmw::Deque<T>::pop_front()
 {
-    if(front_)
+    if(head_)
     {
-        std::destroy_at(front_);
+        std::destroy_at(head_);
 
         RegressFront();
     }
@@ -194,75 +212,69 @@ void mmw::Deque<T>::pop_front()
 template <typename T>
 void mmw::Deque<T>::pop_back()
 {
-    if(back_)
+    if(tail_)
     {
-        std::destroy_at(back_);
+        std::destroy_at(tail_);
 
         RegressBack();
     }
 }
 
 template <typename T>
-void mmw::Deque<T>::ExtendBack()
+void mmw::Deque<T>::RegressFront()
 {
-    if(back_)
+    if(head_)
     {
-        // Are we at the end of the tail node?
-        if( (blockMap_[blockEnd_] + (GetNodeSize() - 1)) == back_ )
+        // Are we at the end of the head node?
+        if( (blockMap_[headBlock_] + (GetNodeSize() - 1)) == head_ )
         {
-            if( (blockEnd_+1) >= mapSize_ )
+            if( ++headBlock_ < (mapSize_ / 2) )
             {
-                std::cout << "Map size exceeded. Exit for now" << std::endl;
-                exit(1);
+                // Deallocate the node
+                free(blockMap_[headBlock_]);
+
+                blockMap_[headBlock_] = nullptr;
+
+                head_ = blockMap_[headBlock_];
             }
             else
             {
-                ++blockEnd_;
-
-                // Allocate a new tail node
-                blockMap_[blockEnd_] = AllocateNode();
-
-                back_ = blockMap_[blockEnd_];
+                head_ = nullptr;
             }
         }
         else
         {
-            ++back_;
+            ++head_;
         }
-    }
-    else
-    {
-        back_ = blockMap_[blockEnd_];
     }
 }
 
 template <typename T>
 void mmw::Deque<T>::RegressBack()
 {
-    if(back_)
+    if(tail_)
     {
-        // Are we at the start of the tail node?
-        if( blockMap_[blockEnd_] == back_ )
+        if( tail_ == head_ )
         {
-            if(blockEnd_ > (mapSize_ / 2))
+            clear();
+        }
+        else if( blockMap_[tailBlock_] == tail_ )
+        {
+            if(tailBlock_ > 0)
             {
                 // Deallocate the node
-                free(blockMap_[blockEnd_]);
+                free(blockMap_[tailBlock_]);
 
-                blockMap_[blockEnd_] = nullptr;
+                blockMap_[tailBlock_] = nullptr;
 
-                --blockEnd_;
+                --tailBlock_;
 
-                back_ = blockMap_[blockEnd_] + (GetNodeSize() - 1);
-            }
-            else
-            {
-                back_ = nullptr;
+                tail_ = blockMap_[tailBlock_] + (GetNodeSize() - 1);
             }
         }
         else
         {
-            --back_;
+            --tail_;
         }
     }
 }
@@ -270,13 +282,13 @@ void mmw::Deque<T>::RegressBack()
 template <typename T>
 T& mmw::Deque<T>::front()
 {
-    if(front_)
+    if(head_)
     {
-        return *front_;
+        return *head_;
     }
-    else if(back_)
+    else if(tail_)
     {
-        return blockMap_[blockBegin_][0];
+        return blockMap_[headBlock_][0];
     }
     else
     {
@@ -287,13 +299,13 @@ T& mmw::Deque<T>::front()
 template <typename T>
 T& mmw::Deque<T>::back()
 {
-    if(back_)
+    if(tail_)
     {
-        return *back_;
+        return *tail_;
     }
-    else if(front_)
+    else if(head_)
     {
-        return blockMap_[blockEnd_ - 1][GetNodeSize() - 1];
+        return blockMap_[tailBlock_ - 1][GetNodeSize() - 1];
     }
     else
     {
@@ -304,7 +316,7 @@ T& mmw::Deque<T>::back()
 template <typename T>
 void mmw::Deque<T>::clear()
 {
-    if(!this->is_empty())
+/*    if(!this->is_empty())
     {
         size_t sz = this->size();
 
@@ -338,14 +350,14 @@ void mmw::Deque<T>::clear()
             }
         }
 
-        blockBegin_ = mapSize_ / 2;
+        headBlock_ = mapSize_ / 2;
 
-        blockEnd_ = mapSize_ / 2;
+        tailBlock_ = mapSize_ / 2;
 
-        front_ = nullptr;
+        head_ = nullptr;
 
-        back_ = nullptr;
-    }
+        tail_ = nullptr;
+    }*/
 }
 
 template <typename T>
@@ -353,20 +365,20 @@ size_t mmw::Deque<T>::size()
 {
     size_t numElements{0};
 
-    if(front_ || back_)
+    if(head_ || tail_)
     {
-        int remainingNodes = blockEnd_ - blockBegin_;
+        int remainingNodes = tailBlock_ - headBlock_;
 
-        if(front_)
+        if(head_)
         {
-            numElements += (blockMap_[blockBegin_] + GetNodeSize()) - front_;
+            numElements += (blockMap_[headBlock_] + GetNodeSize()) - head_;
 
             --remainingNodes;
         }
 
-        if(back_)
+        if(tail_)
         {
-            numElements += (back_ - blockMap_[blockEnd_]) + 1;
+            numElements += (tail_ - blockMap_[tailBlock_]) + 1;
         }
 
         numElements += (GetNodeSize() * remainingNodes);
@@ -385,14 +397,14 @@ T& mmw::Deque<T>::at(size_t pos)
 
     int skipHeadNode{0};
 
-    if(front_)
+    if(head_)
     {
-        int headLastPos = (blockMap_[blockBegin_] + GetNodeSize() - 1) - front_;
+        int headLastPos = (blockMap_[headBlock_] + GetNodeSize() - 1) - head_;
 
         if(pos <= headLastPos)
         {
             // The element is in the head node
-            return *(front_ + pos);
+            return *(head_ + pos);
         }
         else
         {
@@ -407,7 +419,7 @@ T& mmw::Deque<T>::at(size_t pos)
 
     int nodeOffset = pos % GetNodeSize();
 
-    return blockMap_[blockBegin_ + nodeIndex][nodeOffset];
+    return blockMap_[headBlock_ + nodeIndex][nodeOffset];
 }
 
 #endif

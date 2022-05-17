@@ -3,18 +3,18 @@
 
 SUITE(MmwDequeTest)
 {
-    TEST(BackQueue)
+/*    TEST(BackQueue)
     {
         mmw::Deque<int> d;
 
-        CHECK(d.is_empty());
+        REQUIRE CHECK(d.is_empty());
 
         for(int i=0; i<400; i++)
         {
             d.push_back(i);
         }
 
-        CHECK(!d.is_empty());
+        REQUIRE CHECK(!d.is_empty());
 
         CHECK_EQUAL(399, d.back());
         CHECK_EQUAL(0, d.front());
@@ -33,14 +33,14 @@ SUITE(MmwDequeTest)
     {
         mmw::Deque<int> d;
 
-        CHECK(d.is_empty());
+        REQUIRE CHECK(d.is_empty());
 
         for(int i=0; i<400; i++)
         {
             d.push_front(i);
         }
 
-        CHECK(!d.is_empty());
+        REQUIRE CHECK(!d.is_empty());
 
         CHECK_EQUAL(0, d.back());
         CHECK_EQUAL(399, d.front());
@@ -59,7 +59,7 @@ SUITE(MmwDequeTest)
     {
         mmw::Deque<int> d;
 
-        CHECK(d.is_empty());
+        REQUIRE CHECK(d.is_empty());
 
         for(int i=0; i<300; i++)
         {
@@ -71,7 +71,7 @@ SUITE(MmwDequeTest)
             d.push_back(i);
         }
 
-        CHECK(!d.is_empty());
+        REQUIRE CHECK(!d.is_empty());
 
         CHECK_EQUAL(599, d.back());
         CHECK_EQUAL(299, d.front());
@@ -92,14 +92,14 @@ SUITE(MmwDequeTest)
     {
         mmw::Deque<int> d;
 
-        CHECK(d.is_empty());
+        REQUIRE CHECK(d.is_empty());
 
         for(int i=0; i<600; i++)
         {
             d.push_back(i);
         }
 
-        CHECK(!d.is_empty());
+        REQUIRE CHECK(!d.is_empty());
 
         CHECK_EQUAL(599, d.back());
         CHECK_EQUAL(0, d.front());
@@ -116,14 +116,38 @@ SUITE(MmwDequeTest)
         d.pop_front();
         CHECK_EQUAL(1, d.front());
 
-        for(int i=0; i<597; i++)
+        for(int i=0; i<596; i++)
         {
             d.pop_back();
         }
 
         CHECK_EQUAL(0, d.size());
         CHECK(d.is_empty());
+    }*/
+
+    TEST(PopFrontQueue)
+    {
+        mmw::Deque<int> d;
+
+        REQUIRE CHECK(d.is_empty());
+
+        for(int i=0; i<130; i++)
+        {
+            d.push_front(i);
+        }
+
+        REQUIRE CHECK(!d.is_empty());
+
+        CHECK_EQUAL(129, d.front());
+        CHECK_EQUAL(0, d.back());
+
+        d.pop_front();
+        CHECK_EQUAL(128, d.front());
+
+        d.pop_back();
+        CHECK_EQUAL(1, d.back());
     }
+
 }
 
 int main(int argc, char** argv)
