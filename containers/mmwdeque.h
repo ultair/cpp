@@ -1,3 +1,6 @@
+#ifndef MMW_DEQUE_H
+#define MMW_DEQUE_H
+
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -90,9 +93,7 @@ mmw::Deque<T>::~Deque()
 template <typename T>
 T* mmw::Deque<T>::AllocateNode()
 {
-    std::cout << "Allocating a node with size of " << GetNodeSize() << std::endl;
-
-    return reinterpret_cast<T*>(calloc(GetNodeSize(), sizeof(T)));
+    return reinterpret_cast<T*>(calloc(this->GetNodeSize(), sizeof(T)));
 }
 
 template <typename T>
@@ -300,7 +301,6 @@ T& mmw::Deque<T>::back()
     }
 }
 
-
 template <typename T>
 void mmw::Deque<T>::clear()
 {
@@ -410,27 +410,4 @@ T& mmw::Deque<T>::at(size_t pos)
     return blockMap_[blockBegin_ + nodeIndex][nodeOffset];
 }
 
-int main(int argc, char** argv)
-{
-    mmw::Deque<int> deque;
-
-    for(int i=1; i<=400; i++)
-    {
-        std::cout << "Push front: " << i << std::endl;
-        deque.push_front(i);
-    }
-
-    for(int i=1; i<=200; i++)
-    {
-        std::cout << "Push back: " << i << std::endl;
-        deque.push_back(i);
-    }
-
-    std::cout << deque.size() << std::endl;
-
-    deque.clear();
-
-    std::cout << deque.size() << std::endl;
-
-    return 0;
-}
+#endif
