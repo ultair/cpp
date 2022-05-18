@@ -1,4 +1,4 @@
-#include "mmwdeque.h"
+#include "deque.h"
 #include "UnitTest++/UnitTest++.h"
 
 SUITE(MmwDequeTest)
