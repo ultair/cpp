@@ -1,14 +1,16 @@
-#include <iostream>
 #include <functional>
 #include <forward_list>
 #include <vector>
 
-template <typename K, typename V>
-struct MyHashNode
+namespace mmw
 {
-    MyHashNode() = delete;
 
-    MyHashNode(const K& k, const V& v)
+template <typename K, typename V>
+struct HashNode
+{
+    HashNode() = delete;
+
+    HashNode(const K& k, const V& v)
         : key_(k)
         , value_(v)
     {
@@ -20,11 +22,11 @@ struct MyHashNode
 };
 
 template <typename K, typename V>
-class MyHashMap
+class HashMap
 {
 public:
 
-    MyHashMap();
+    HashMap();
 
     void insert(const K& key, const V& value);
 
@@ -38,23 +40,23 @@ private:
 
     size_t bucketCount_{20};
 
-    typedef std::forward_list< MyHashNode<K,V> > HashNodeList;
+    typedef std::forward_list< HashNode<K,V> > HashNodeList;
 
     std::vector<HashNodeList> buckets_;
 };
 
 template <typename K, typename V>
-MyHashMap<K,V>::MyHashMap()
+mmw::HashMap<K,V>::HashMap()
 {
     buckets_.resize(bucketCount_);
 }
 
 template <typename K, typename V>
-void MyHashMap<K,V>::insert(const K& key, const V& value)
+void mmw::HashMap<K,V>::insert(const K& key, const V& value)
 {
     size_t bktIdx{keyHash_(key) % bucketCount_};
 
-    MyHashMap::HashNodeList& bucket = buckets_[bktIdx];
+    HashMap::HashNodeList& bucket = buckets_[bktIdx];
 
     if(bucket.empty())
     {
@@ -77,11 +79,11 @@ void MyHashMap<K,V>::insert(const K& key, const V& value)
 }
 
 template <typename K, typename V>
-V* MyHashMap<K,V>::find(const K& key)
+V* mmw::HashMap<K,V>::find(const K& key)
 {
     size_t bktIdx{keyHash_(key) % bucketCount_};
 
-    MyHashMap::HashNodeList& bucket = buckets_[bktIdx];
+    HashMap::HashNodeList& bucket = buckets_[bktIdx];
 
     if(bucket.empty())
     {
@@ -103,11 +105,11 @@ V* MyHashMap<K,V>::find(const K& key)
 }
 
 template <typename K, typename V>
-void MyHashMap<K,V>::erase(const K& key)
+void mmw::HashMap<K,V>::erase(const K& key)
 {
     size_t bktIdx{keyHash_(key) % bucketCount_};
 
-    MyHashMap::HashNodeList& bucket = buckets_[bktIdx];
+    HashMap::HashNodeList& bucket = buckets_[bktIdx];
 
     if(bucket.empty())
     {
@@ -131,46 +133,4 @@ void MyHashMap<K,V>::erase(const K& key)
     }
 }
 
-int main(int argc, char** argv)
-{
-    MyHashMap<std::string, int> hashMap;
-
-    for(int i=1; i<argc; i++)
-    {
-        hashMap.insert(argv[i], i);
-    }
-
-    for(int i=1; i<argc; i++)
-    {
-        int* val = hashMap.find(argv[i]);
-
-        if(val)
-        {
-            std::cout << argv[i] << " = " << *val << std::endl;
-        }
-    }
-
-    hashMap.insert("hundred", 100);
-
-    int* val = hashMap.find("hundred");
-
-    if(val)
-    {
-        std::cout << "hundred" << " = " << *val << std::endl;
-    }
-
-    hashMap.erase("hundred");
-
-    val = hashMap.find("hundred");
-
-    if(val)
-    {
-        std::cout << "hundred" << " = " << *val << std::endl;
-    }
-    else
-    {
-        std::cout << "hundred not found" << std::endl;
-    }
-
-    return 0;
 }

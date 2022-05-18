@@ -2,12 +2,12 @@ CC=g++
 
 CFLAGS=-std=c++17 -Wpedantic -g
 
-all: hashmap testdeque
+all: testhashmap testdeque
 
 .PHONY: all
 
-hashmap: hashmap.cpp
-	$(CC) $(CFLAGS) -o $@ $^
+testhashmap: testhashmap.cpp
+	$(CC) $(CFLAGS) -lUnitTest++ -o $@ $^
 
 testdeque: testdeque.cpp
 	$(CC) $(CFLAGS) -lUnitTest++ -o $@ $^
@@ -15,4 +15,4 @@ testdeque: testdeque.cpp
 .PHONY: clean
 
 clean:
-	rm -f hashmap testdeque
+	rm -f testhashmap testdeque
